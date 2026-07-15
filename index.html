@@ -465,7 +465,7 @@ function qSizeClass(text){
 function render(){
   const q = QS[ci];
   const isDone = q.type === 'done';
-  const bg = isDone ? 'bg-black' : bgForQuestion(ci);
+  const bg = isDone ? 'bg-black' : (q.type === 'role' ? 'bg-cream' : bgForQuestion(ci));
   const hasBack = ci > 0;
 
   const card = document.createElement('div');
