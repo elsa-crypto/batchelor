@@ -751,9 +751,8 @@ function validateCurrent(){
     const missing = q.required.filter(k => !String(answers[k]||'').trim());
     if (missing.length) return fail('all fields required.', missing);
   }
-  if (q.type === 'contact' &&
-      !/@[^@\s]+\.edu$/i.test(String(answers.email||'').trim())){
-    return fail('needs a .edu email.', ['email']);
+  if (q.type === 'contact' && !String(answers.email||'').includes('@')){
+    return fail("that's not an email.", ['email']);
   }
   return true;
 }
