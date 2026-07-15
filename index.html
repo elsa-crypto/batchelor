@@ -78,8 +78,8 @@
     letter-spacing:1px;
     line-height:1; margin-left:auto;
   }
-  .wordmark b{ color:var(--orange); font-weight:400; }
-  .card.bg-orange .wordmark b, .card.bg-muted .wordmark b{ color:var(--dark); }
+  .wordmark{ color:#FF6600; }
+  .wordmark b{ color:#FF6600; font-weight:400; }
   .wordmark .x{
     display:inline-block; margin:0 6px;
     font-family:'Space Mono',monospace; font-size:12px;
@@ -159,6 +159,7 @@
     transition:transform .1s;
     letter-spacing:.1px;
   }
+  .pill.sm{ padding:13px 16px; font-size:15.5px; }
   .pill:hover{ transform:translateY(-1px); }
   .pill:active{ transform:scale(.97); }
   .card.bg-cream .pill, .card.bg-muted .pill{ background:var(--dark); color:var(--cream); }
@@ -317,9 +318,10 @@ const QS = [
   { type:'type-page', q:"what's your type", key:'into',
     descKey:'type_description', placeholder:'describe your type\u2026' },
 
-  { type:'textarea', q:'ever done anything in front of a crowd?',
-    sub:'performing, pitching, comedy, sports, debate, streaming \u2014 what?',
-    key:'crowd_experience', placeholder:'tell us' },
+  { type:'multi-pill', q:'ever done anything in front of a crowd?',
+    sub:'pick all that apply.',
+    key:'crowd_experience',
+    options:['performing','pitching','comedy','sports','debate','streaming','nothing yet'] },
 
   { type:'pills-2', q:'how do you feel about being roasted a little?',
     key:'roast_consent', a:'go easy', b:'do your worst' },
@@ -343,11 +345,11 @@ const QS = [
     key:'red_flag', placeholder:'the audience finds out either way' },
 
   { type:'text-single', q:'drop a link',
-    sub:'linkedin, portfolio, github, resume \u2014 whatever shows what you do',
+    sub:'linkedin, portfolio, github, resume. whatever shows what you do',
     key:'link', placeholder:'https://' },
 
   { type:'video-submit', q:'drop your video',
-    sub:'60 seconds max. youtube, loom, drive, tiktok \u2014 whatever plays.',
+    sub:'60 seconds max. youtube, loom, drive, tiktok. whatever plays.',
     key:'video_link', placeholder:'https://' },
 
   { type:'contact', required:['phone','email'], q:'how do we reach you',
@@ -368,7 +370,7 @@ const answers = {
   phone:'', email:'',
   name:'', instagram:'', age:'',
   into:null, type_description:'',
-  crowd_experience:'',
+  crowd_experience:[],
   roast_consent:null,
   regretted_text:'',
   why_single:'',
@@ -593,6 +595,19 @@ function render(){
       bottomHtml = `<div class="pills"><button class="pill" data-next>next \u2192</button></div>`;
       break;
     }
+    case 'multi-pill': {
+      const sel = answers[q.key] || [];
+      const opts = q.options.map(o =>
+        `<button class="pill sm ${sel.includes(o)?'selected':''}" data-multi-pick="${escAttr(o)}">${o}</button>`
+      ).join('');
+      bodyHtml = `
+        <div class="question small">${q.q}</div>
+        ${q.sub ? `<div class="subline">${q.sub}</div>` : ''}
+        <div class="pills two" style="margin-top:20px; gap:10px;">${opts}</div>
+      `;
+      bottomHtml = `<div class="pills"><button class="pill" data-next>next \u2192</button></div>`;
+      break;
+    }
     case 'pills-2': {
       const sel = answers[q.key];
       bodyHtml = `<div class="question ${qCls}">${q.q}</div>`;
@@ -710,6 +725,16 @@ function wire(card, q){
     };
   });
 
+  card.querySelectorAll('[data-multi-pick]').forEach(b => {
+    b.onclick = () => {
+      const v = b.dataset.multiPick;
+      const arr = answers[q.key];
+      const i = arr.indexOf(v);
+      if (i >= 0) arr.splice(i, 1); else arr.push(v);
+      b.classList.toggle('selected', i < 0);
+    };
+  });
+
   card.querySelectorAll('[data-pick]').forEach(b => {
     b.onclick = () => { answers[q.key] = b.dataset.pick; advance(); };
   });
@@ -784,7 +809,7 @@ function buildPayload(){
     ...base,
     into: answers.into,
     type_description: answers.type_description,
-    crowd_experience: answers.crowd_experience,
+    crowd_experience: answers.crowd_experience.join(', '),
     roast_consent: answers.roast_consent,
     regretted_text: answers.regretted_text,
     why_single: answers.why_single,
